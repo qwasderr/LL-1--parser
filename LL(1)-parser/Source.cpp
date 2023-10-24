@@ -24,7 +24,10 @@ class Grammar {
 	/*
 	map<string, set<string>> where string is the name of non-terminal, set<string> is its first_k set
 	*/
+	set<string> epsilon; //for epsilon non-terminals
+
 public:
+
 	void read() {
 		//reading axiom
 		string axiom;
@@ -84,10 +87,12 @@ public:
 			}
 		}
 	}
+
 	bool isNonTerminal(string s) {
 		for (int i = 0; i < non_terminals.size(); ++i) if (s == non_terminals[i]) return true;
 		return false;
 	}
+
 	bool isTerminal(string s) {
 		for (int i = 0; i < terminals.size(); ++i) if (s == terminals[i]) return true;
 		return false;
@@ -105,6 +110,7 @@ public:
 		}
 		return res;
 	}
+
 	// first_k building, size is the length
 	void build_first_k(int size) {
 		set<string> temp;
@@ -169,10 +175,68 @@ public:
 			if (first_k == temp_configuration) configuration = true; // we check whether the algorithm has stabilized
 			else temp_configuration = first_k;
 		}
+		first_k.erase("eps");
+	}
+
+	//searching for epsilon non-terminals
+	void epsilon_non_term() {
+		vector<string> rule;
+		set<string> state=epsilon; //to know when the algorithm stabilizes
+		bool only_epsilons,is_stabilized=false;
+		while (!is_stabilized) { //while not stabilized
+			for (int i = 0; i < non_terminals.size(); ++i) { //for each non-terminal
+				int k = rules[non_terminals[i]].size(); 
+				for (int j = 0; j < rules[non_terminals[i]].size(); ++j) { //for each rule
+					rule = rules[non_terminals[i]][j];
+					only_epsilons = true;
+					if (rule[0] == "eps") epsilon.insert(non_terminals[i]); //if we have non-terminal->eps it's an epsilon non-terminal by definition
+					else for (int k = 0; k < rule.size(); ++k) {
+						if (epsilon.count(rule[k]) == 0) {
+							only_epsilons = false;
+							break;
+						}
+					}
+					if (only_epsilons == true) epsilon.insert(non_terminals[i]); //if the rule consists of only epsilons we can derive eps from the current non-terminal
+				}
+			}
+			if (state == epsilon) is_stabilized = true; // we check whether the algorithm has stabilized
+			else state = epsilon;
+		}
+	}
+
+	//first_k sets output
+	void first_k_out() {
+		int size;
+		for (int i = 0; i < non_terminals.size(); ++i) {
+			cout << non_terminals[i] << ": {";
+			size = 0;
+			for (string x : first_k[non_terminals[i]]) {
+				if (size < first_k[non_terminals[i]].size()-1) cout << x << ", ";
+				else cout << x;
+				++size;
+			}
+
+			cout << "}" << endl;;
+		}
+	}
+
+	//epsilon non-terminals set output
+	void epsilon_out() {
+		cout << "epsilon non-terminals: {";
+		int size = 0;
+		for (string x : epsilon) {
+			if (size < epsilon.size()-1) cout << x << ", ";
+			else cout << x;
+			++size;
+		}
+		cout << "}";
 	}
 };
 int main() {
 	Grammar grammar;
 	grammar.read();
-	grammar.build_first_k(1);
+	grammar.build_first_k(2);
+	grammar.epsilon_non_term();
+	grammar.first_k_out();
+	grammar.epsilon_out();
 }
