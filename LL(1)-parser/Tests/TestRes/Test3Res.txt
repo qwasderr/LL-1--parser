@@ -1,0 +1,7 @@
+S: {abd, cd, cde, ea, efa, eff}
+A: {ab, c}
+B: {d, de, dee}
+C: {e, ee, eee, eps}
+D: {eps, f, ff, fff}
+epsilon non-terminals: {C, D}
+k = 3

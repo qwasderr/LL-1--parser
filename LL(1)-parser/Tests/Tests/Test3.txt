@@ -1,0 +1,7 @@
+%start S
+%token a b c d e f
+S: A B | e D a
+A: a b | c
+B: d C
+C: e C | eps
+D: f D | eps

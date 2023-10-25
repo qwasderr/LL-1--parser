@@ -131,6 +131,13 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Grammar.txt" />
+    <Text Include="Output.txt" />
+    <Text Include="Tests\TestRes\Test1Res.txt" />
+    <Text Include="Tests\TestRes\Test2Res.txt" />
+    <Text Include="Tests\TestRes\Test3Res.txt" />
+    <Text Include="Tests\Tests\Test1.txt" />
+    <Text Include="Tests\Tests\Test2.txt" />
+    <Text Include="Tests\Tests\Test3.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
