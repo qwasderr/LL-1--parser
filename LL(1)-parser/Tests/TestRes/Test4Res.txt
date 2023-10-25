@@ -1,0 +1,8 @@
+S: {a, aaa, aab, aba}
+A: {a, aaa, aab, aba}
+C: {aa, aaa, aab, aba, eps}
+B: {aa, aaa, aab, aba, eps}
+D: {a, aaa, aab, aba}
+epsilon non-terminals: {B, C}
+k = 3
+left-recursive non-terminals: {A, B, C, D, S}

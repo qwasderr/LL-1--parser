@@ -4,3 +4,4 @@ loop: {while variable < number do variable < number, while variable < number do 
 expression: {variable < number, variable == number, variable = number, variable > number}
 epsilon non-terminals: {}
 k = 10
+left-recursive non-terminals: {}

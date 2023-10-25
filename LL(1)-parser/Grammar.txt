@@ -1,7 +1,6 @@
-﻿%start S
-%token a + * ( )
-S: B A
-A: + B A | eps
-B: D C
-C: * D C | eps
-D: ( S ) | a
+﻿%start program
+%token begin end if then variable > < == do = while number
+program: begin operator end | begin loop end
+operator: if expression then expression
+loop: while expression do expression
+expression: variable > number | variable < number | variable == number | variable = number

@@ -5,3 +5,4 @@ C: {e, ee, eee, eps}
 D: {eps, f, ff, fff}
 epsilon non-terminals: {C, D}
 k = 3
+left-recursive non-terminals: {}

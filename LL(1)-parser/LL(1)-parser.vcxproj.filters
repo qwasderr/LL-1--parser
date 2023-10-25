@@ -28,5 +28,7 @@
     <Text Include="Tests\Tests\Test2.txt" />
     <Text Include="Tests\Tests\Test3.txt" />
     <Text Include="Tests\TestRes\Test3Res.txt" />
+    <Text Include="Tests\Tests\Test4.txt" />
+    <Text Include="Tests\TestRes\Test4Res.txt" />
   </ItemGroup>
 </Project>

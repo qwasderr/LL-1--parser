@@ -1,0 +1,7 @@
+%start S
+%token a b
+S: A b S | A C
+A: B D
+C: S a | eps
+B: B C | eps
+D: a B | B A

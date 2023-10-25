@@ -41,6 +41,7 @@ class Grammar {
 	With this structure we can add (in the sense of a binary operation on dictionary sets) terminal symbols whose length is >1
 	*/
 	set<string> epsilon; //for epsilon non-terminals
+	set<string> leftRecursive; //for left-recursive non-terminals 
 
 public:
 
@@ -368,6 +369,48 @@ public:
 		}
 	}
 
+	//inserting reachable non-terminals as the first symbol of the selected non-terminal
+	void insertNonTerminals(int i, set<string>& state1) { // set of reachable non-terminals as the first symbol of the selected non-terminal in leftRecursive_get() funct 
+		int k = rules[non_terminals[i]].size(), pos;
+		vector<string> rule;
+		for (int j = 0; j < rules[non_terminals[i]].size(); ++j) { //for each rule
+			rule = rules[non_terminals[i]][j];
+			if (isNonTerminal(rule[0])) state1.insert(rule[0]); //if the first character in the rule is non-terminal then we add it to our set
+			pos = 0;
+			while ((pos < rule.size()) && (epsilon.count(rule[pos]) > 0) && isNonTerminal(rule[pos])) { //while non-terminals can derive eps adding them to our set
+				state1.insert(rule[pos]);
+				++pos;
+			}
+			if (pos < rule.size() && isNonTerminal(rule[pos])) state1.insert(rule[pos]); //the first non-terminal after a sequence of epsilon non-terminals is also reachable
+		}
+	}
+
+	//getting left recursive non-terminals
+	void leftRecursive_get() {
+		set<string> state1,state2;
+		vector<string> rule;
+		int is_stabilized = 0, pos=0;
+		for (int p = 0; p < non_terminals.size(); ++p) { //for each rule
+			state1.clear();
+			insertNonTerminals(p, state1);
+			if (!state1.empty()) { //state1 is empty if there's no left recursion for sure
+				is_stabilized = 0;
+				while (!is_stabilized) { //while the algorithm isn't stable
+					for (string x : state1) {
+						for (int i = 0; i < non_terminals.size(); ++i) if (non_terminals[i] == x) {
+							insertNonTerminals(i, state1); break; //for each non-terminal in our set we insert reachable non-terminlals from the first place in the rule
+						}
+						
+					}
+					if (state1 == state2) is_stabilized = true; // we check whether the algorithm has stabilized
+					else state2 = state1;
+				}
+				if (state1.count(non_terminals[p]) > 0) leftRecursive.insert(non_terminals[p]); //if we can reach our selected non-terminal then it's left recursive
+			}
+		}
+	}
+
+	//pretty format functions
 	void outWithSpaces(pair<string, vector<int>> x, bool coma) {
 		int position = 0;
 		int pos_mas = 0;
@@ -424,6 +467,7 @@ public:
 		cout << "}";
 	}
 
+	//first_k sets output to the file
 	void first_k_out_file(string filename, bool spaces) { //do we need spaces between terminals
 		ofstream file(filename);
 		int size, position = 0, pos_mas = 0;
@@ -458,12 +502,38 @@ public:
 		file << "}";
 		file.close();
 	}
+
+	//left recursive set output
+	void left_recursive_out() {
+		cout << "left-recursive non-terminals: {";
+		int size = 0;
+		for (string x : leftRecursive) {
+			if (size < leftRecursive.size() - 1) cout << x << ", ";
+			else cout << x;
+			++size;
+		}
+		cout << "}";
+	}
+
+	//left recursive set output to the file
+	void left_recursive_out_file(string filename) {
+		ofstream file(filename, ios::app);
+		file << "left-recursive non-terminals: {";
+		int size = 0;
+		for (string x : leftRecursive) {
+			if (size < leftRecursive.size() - 1) file << x << ", ";
+			else file << x;
+			++size;
+		}
+		file << "}";
+		file.close();
+	}
 };
 
 //output k to the file
 void out_k(string filename, int k) {
 	ofstream file(filename, ios::app);
-	file << endl << "k = " << k;
+	file << endl << "k = " << k <<endl;
 	file.close();
 }
 
@@ -476,4 +546,6 @@ int main() {
 	grammar.first_k_out_file("Output.txt",false);
 	grammar.epsilon_out_file("Output.txt");
 	out_k("Output.txt", k);
+	grammar.leftRecursive_get();
+	grammar.left_recursive_out_file("Output.txt");
 }

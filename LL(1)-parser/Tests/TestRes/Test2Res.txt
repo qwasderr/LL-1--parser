@@ -5,3 +5,4 @@ C: {*((, *(a, *a, *a*, eps}
 D: {(((, ((a, (a), (a*, (a+, a}
 epsilon non-terminals: {A, C}
 k = 3
+left-recursive non-terminals: {}
