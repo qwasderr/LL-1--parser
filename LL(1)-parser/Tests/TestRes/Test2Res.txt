@@ -1,8 +1,18 @@
+First_k for no terminals:
 S: {(((, ((a, (a), (a*, (a+, a, a*(, a*a, a+(, a+a}
 A: {+((, +(a, +a, +a*, +a+, eps}
 B: {(((, ((a, (a), (a*, (a+, a, a*(, a*a}
 C: {*((, *(a, *a, *a*, eps}
 D: {(((, ((a, (a), (a*, (a+, a}
+
+Follow_k for no terminals:
+S: {), )), ))), ))*, ))+, )*(, )*a, )+(, )+a, eps}
+A: {), )), ))), ))*, ))+, )*(, )*a, )+(, )+a, eps}
+B: {), )), ))), ))*, ))+, )*(, )*a, )+(, )+a, +((, +(a, +a, +a), +a*, +a+, eps}
+C: {), )), ))), ))*, ))+, )*(, )*a, )+(, )+a, +((, +(a, +a, +a), +a*, +a+, eps}
+D: {), )), ))), ))*, ))+, )*(, )*a, )+(, )+a, *((, *(a, *a, *a), *a*, *a+, +((, +(a, +a, +a), +a*, +a+, eps}
+
 epsilon non-terminals: {A, C}
+
 k = 3
 left-recursive non-terminals: {}

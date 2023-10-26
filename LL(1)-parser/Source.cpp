@@ -10,7 +10,9 @@ class Grammar {
 	vector <string> terminals;
 	vector <string> non_terminals;
 	string axiom;
-	map<string, map<int, vector<string>>> rules; // map<left side of the rule(non-terminal), map<number of the rule for the non-terminal from the left side of the rule, vector<string> of terminals/non-terminals for this rule>>
+
+    // map<left side of the rule(non-terminal), map<number of the rule for the non-terminal, vector<string> of terminals/non-terminals for this rule>>
+	map<string, map<int, vector<string>>> rules;
 	/*
 	Example: A: + B A | eps
 	map<string, map<int, vector<string>>> let string=S, int=I, vector<string>=Strings
@@ -20,6 +22,7 @@ class Grammar {
 			  |
 			   => I=1 && Strings={"eps"}
 	*/
+
 	//map<string, set<string>> first_k; //map for the first_k sets; OLD FUNCTIONALITY
 	map <string, map<string, vector<int>>> first_k2;
 	/*
@@ -40,6 +43,8 @@ class Grammar {
 
 	With this structure we can add (in the sense of a binary operation on dictionary sets) terminal symbols whose length is >1
 	*/
+
+    map <string, map<string, vector<int>>> follow_k;
 	set<string> epsilon; //for epsilon non-terminals
 	set<string> leftRecursive; //for left-recursive non-terminals 
 
@@ -343,6 +348,186 @@ public:
 		first_k2.erase("eps");
 	}
 
+
+    void build_follow_k(int k) {
+
+        for (auto &non_terminal: non_terminals) {
+            follow_k[non_terminal] = {};
+        }
+
+        //We need to know for each rule on what min step it could be applied. See example of 4 iteration from book!
+        map<string, int> min_step_for_non_terminals = calculate_min_requiered_steps();
+        initialize_follow_k_with_axiom();
+
+        bool changes_made;
+        int iteration_number = 1;
+        do {
+            changes_made = false;
+
+            //for comparing results of previous iteration with current.
+            map<string, map<string, vector<int>>> follow_k_current;
+            follow_k_current.insert(follow_k.begin(), follow_k.end());
+
+            for (const auto &rule_entry: rules) {
+                string rule_non_terminal = rule_entry.first;
+                int min_step_for_start_non_terminal = min_step_for_non_terminals[rule_non_terminal];
+
+                for (const auto &entry: rule_entry.second) {
+                    int rule_number = entry.first;
+                    vector<string> production = entry.second;
+
+                    // For each production Non_terminal -> αBβ:
+                    for (int i = 0; i < production.size(); i++) {
+                        string maybe_non_terminal = production[i];
+                        if (isNonTerminal(maybe_non_terminal)) {
+                            // if on this step current Non_terminal could be produced, nothing to change. It's similar to "-" in the book. See example for C, D in the book.
+                            if (iteration_number >= min_step_for_start_non_terminal) {
+
+                                // retrieve continuation = β
+                                vector<string> follow_of_non_terminal = continuation_of_production(production, i + 1);
+
+                                // get first_k(β) = first_k(β_1) +_k first_k(β_2) +_k first_k(β_3) +_k ...
+                                map<string, vector<int>> first_k_from_follow;
+
+                                // in the beginning just add first_k(β_1) to map
+                                first_k_from_follow = mergeMaps(first_k_from_follow, get_first_k_for(follow_of_non_terminal[0]));
+                                // for each next β_j sum binary in with β_(j-1)
+                                for (int j = 1; j < follow_of_non_terminal.size(); j++) {
+                                    first_k_from_follow = sumOfSets(first_k_from_follow, get_first_k_for(follow_of_non_terminal[j]), k);
+                                }
+
+                                map<string, vector<int>> follow_k_from_rule_non_terminal = follow_k_current[rule_non_terminal];
+                                map<string, vector<int>> concat_result = sumOfSets(first_k_from_follow, follow_k_from_rule_non_terminal, k);
+
+
+                                // Step 3: check should we stop to iterate or not
+                                map<string, vector<int>> present_set_of_follow = follow_k_current[maybe_non_terminal];
+                                map<string, vector<int>> mergedMap = mergeMaps(present_set_of_follow, concat_result);
+                                if (mergedMap != present_set_of_follow) {
+                                    follow_k[maybe_non_terminal] = mergedMap;
+                                    changes_made = true;
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+            iteration_number += 1;
+        } while (changes_made);
+    }
+
+    void initialize_follow_k_with_axiom() {
+        map<string, vector<int>> &axiom_0_iteration = follow_k[axiom];
+        axiom_0_iteration["eps"] = {3};
+    }
+
+    map<string, vector<int>> get_first_k_for(const string& symbol) {
+        map<string, vector<int>> symbol_set;
+        if (isNonTerminal(symbol)) {
+            symbol_set = first_k2[symbol];
+        } else {
+            symbol_set[symbol] = {static_cast<int>(symbol.length())};
+        }
+        return symbol_set;
+    }
+
+    static vector<string> continuation_of_production(vector<string> production, int start_from) {
+        vector<string> continuation;
+        for (int i = start_from; i < production.size(); i++) {
+            continuation.push_back(production[i]);
+        }
+        if (continuation.empty()) continuation.emplace_back("eps");
+        return continuation;
+    }
+
+    static void printMap(const map<string, vector<int>>& myMap) {
+        for (const auto& entry : myMap) {
+            cout << entry.first << ": ";
+
+            for (int value : entry.second) {
+                cout << value << " ";
+            }
+
+            cout << endl;
+        }
+    }
+
+    void print_3_step(map<string, vector<int>> mergedMap) {
+        cout << "!!! NOT EQUAL" << endl;
+        cout << "Updated map:" << endl;
+        printMap(mergedMap);
+    }
+
+    map<string, vector<int>> mergeMaps(const map<string, vector<int>>& map1, const map<string, vector<int>>& map2) {
+        map<string, vector<int>> mergedMap = map1;
+
+        for (const auto& entry : map2) {
+            const string& key = entry.first;
+            const vector<int>& values = entry.second;
+            mergedMap[key] = values;
+        }
+
+        return mergedMap;
+    }
+
+    map<string, int> calculate_min_requiered_steps() {
+        map<string, int> step_for_rule;
+        step_for_rule[axiom] = 0;
+
+        map<string, vector<string>> production_map;
+
+        for (const auto& entry : rules) {
+            const string& non_terminal = entry.first;
+            const map<int, vector<string>>& rule_steps = entry.second;
+
+            for (const auto& step_entry : rule_steps) {
+                const vector<string>& productions = step_entry.second;
+
+                for (const string& production : productions) {
+                    if (isNonTerminal(production) && production != non_terminal) production_map[production].push_back(non_terminal);
+                }
+            }
+        }
+
+        for (const auto& entry : production_map) {
+            const vector<string>& could_be_derived_from = entry.second;
+            for (const string& non_terminal_from : could_be_derived_from) {
+                if (non_terminal_from == axiom) {
+                    step_for_rule[entry.first] = 2;
+                }
+            }
+        }
+
+        for (const auto& entry : production_map) {
+            const string &non_terminal = entry.first;
+            if(non_terminal != axiom) {
+                int step = find_step_recursive(non_terminal, step_for_rule, production_map);
+                step_for_rule[non_terminal] = step;
+            }
+        }
+
+        return step_for_rule;
+    }
+
+    int find_step_recursive(const string& non_terminal, map<string, int>& step_for_rule, const map<string, vector<string>>& production_map) {
+        if (step_for_rule[non_terminal] > 1) {
+            return step_for_rule[non_terminal];
+        }
+
+        const vector<string>& productions = production_map.at(non_terminal);
+        int min_step = INT_MAX;
+
+        for (const string& production : productions) {
+            int step = 1;
+            step = max(step, find_step_recursive(production, step_for_rule, production_map) + 1);
+            min_step = min(min_step, step);
+        }
+
+        return min_step;
+    }
+
+
 	//searching for epsilon non-terminals
 	void epsilon_non_term() {
 		vector<string> rule;
@@ -437,7 +622,7 @@ public:
 
 	//first_k sets output
 	void first_k_out(bool spaces) { //do we need spaces between terminals
-		int size, position = 0, pos_mas = 0;;
+		int size;
 		for (int i = 0; i < non_terminals.size(); ++i) {
 			cout << non_terminals[i] << ": {";
 			size = 0;
@@ -471,6 +656,7 @@ public:
 	void first_k_out_file(string filename, bool spaces) { //do we need spaces between terminals
 		ofstream file(filename);
 		int size, position = 0, pos_mas = 0;
+        file << "First_k for no terminals:" << endl;
 		for (int i = 0; i < non_terminals.size(); ++i) {
 			file << non_terminals[i] << ": {";
 			size = 0;
@@ -486,6 +672,31 @@ public:
 
 			file << "}" << endl;
 		}
+        file << endl;
+		file.close();
+	}
+
+	//follow_k sets output to the file
+	void follow_k_out_file(const string& filename, bool spaces) { //do we need spaces between terminals
+		ofstream file(filename, ios::app);
+		int size, position = 0, pos_mas = 0;
+        file << "Follow_k for no terminals:" << endl;
+		for (int i = 0; i < non_terminals.size(); ++i) {
+			file << non_terminals[i] << ": {";
+			size = 0;
+			for (auto const& x : follow_k[non_terminals[i]]) {
+
+				if (size < follow_k[non_terminals[i]].size() - 1) {
+					if (spaces)  outWithSpacesToFile(x, true, file);
+					else file << x.first << ", ";
+				}
+				else if (spaces) outWithSpacesToFile(x, false, file); else file << x.first;
+				++size;
+			}
+
+			file << "}" << endl;
+		}
+        file << endl;
 		file.close();
 	}
 
@@ -499,7 +710,7 @@ public:
 			else file << x;
 			++size;
 		}
-		file << "}";
+		file << "}" << endl;
 		file.close();
 	}
 
@@ -542,8 +753,10 @@ int main() {
 	Grammar grammar;
 	grammar.read("Grammar.txt");
 	grammar.build_first_k(k);
+	grammar.build_follow_k(k);
 	grammar.epsilon_non_term();
 	grammar.first_k_out_file("Output.txt",false);
+	grammar.follow_k_out_file("Output.txt",false);
 	grammar.epsilon_out_file("Output.txt");
 	out_k("Output.txt", k);
 	grammar.leftRecursive_get();
