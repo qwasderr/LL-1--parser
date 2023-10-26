@@ -1,4 +1,4 @@
-﻿%start S
+%start S
 %token ; for ( ) = id and { }
 S: A ; | for ( A ; C ; A ) S | B
 A: V = E | eps

@@ -761,8 +761,8 @@ int main() {
 	grammar.build_first_k(k);
 	grammar.build_follow_k(k);
 	grammar.epsilon_non_term();
-	grammar.first_k_out_file("Output.txt",false);
-	grammar.follow_k_out_file("Output.txt",false);
+	grammar.first_k_out_file("Output.txt",true);
+	grammar.follow_k_out_file("Output.txt",true);
 	grammar.epsilon_out_file("Output.txt");
 	out_k("Output.txt", k);
 	grammar.leftRecursive_get();

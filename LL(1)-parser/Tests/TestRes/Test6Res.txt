@@ -1,0 +1,16 @@
+First_k for no terminals:
+S: {10, 11, eps}
+A: {01, 10, 11}
+B: {0, 01}
+C: {1}
+
+Follow_k for no terminals:
+S: {eps}
+A: {0, 01, 10, 11}
+B: {eps}
+C: {0, 01, 10, 11}
+
+epsilon non-terminals: {S}
+
+k = 2
+left-recursive non-terminals: {}

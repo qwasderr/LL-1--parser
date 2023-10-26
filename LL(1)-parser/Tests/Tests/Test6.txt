@@ -1,0 +1,6 @@
+%start S
+%token 1 0
+S: 1 A B | eps
+A: 1 A C | 0 C
+B: 0 S
+C: 1
