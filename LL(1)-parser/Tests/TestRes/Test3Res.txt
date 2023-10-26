@@ -1,8 +1,18 @@
+First_k for no terminals:
 S: {abd, cd, cde, ea, efa, eff}
 A: {ab, c}
 B: {d, de, dee}
 C: {e, ee, eee, eps}
 D: {eps, f, ff, fff}
+
+Follow_k for no terminals:
+S: {eps}
+A: {d, de, dee}
+B: {eps}
+C: {eps}
+D: {a}
+
 epsilon non-terminals: {C, D}
+
 k = 3
 left-recursive non-terminals: {}
