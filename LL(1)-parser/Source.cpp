@@ -434,11 +434,10 @@ public:
 
     static vector<string> continuation_of_production(vector<string> production, int start_from) {
         vector<string> continuation;
-        int count = 1;
         for (int i = start_from; i < production.size(); i++) {
             continuation.push_back(production[i]);
         }
-        continuation.emplace_back("eps");
+        if (continuation.empty()) continuation.emplace_back("eps");
         return continuation;
     }
 
