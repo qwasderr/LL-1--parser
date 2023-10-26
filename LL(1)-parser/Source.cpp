@@ -502,7 +502,7 @@ public:
         for (const auto& entry : production_map) {
             const string &non_terminal = entry.first;
             if(non_terminal != axiom) {
-                int step = find_step_recursive(non_terminal, step_for_rule, production_map);
+                int step = find_step_recursive(non_terminal, step_for_rule, production_map, {non_terminal});
                 step_for_rule[non_terminal] = step;
             }
         }
@@ -510,7 +510,8 @@ public:
         return step_for_rule;
     }
 
-    int find_step_recursive(const string& non_terminal, map<string, int>& step_for_rule, const map<string, vector<string>>& production_map) {
+    int find_step_recursive(const string& non_terminal, map<string, int>& step_for_rule,
+                            const map<string, vector<string>>& production_map, set<string> visited_non_terminals) {
         if (step_for_rule[non_terminal] > 1) {
             return step_for_rule[non_terminal];
         }
@@ -520,7 +521,12 @@ public:
 
         for (const string& production : productions) {
             int step = 1;
-            step = max(step, find_step_recursive(production, step_for_rule, production_map) + 1);
+            if(visited_non_terminals.find(production) != visited_non_terminals.end()) {
+                visited_non_terminals.clear();
+                return -1;
+            }
+            visited_non_terminals.insert(production);
+            step = max(step, find_step_recursive(production, step_for_rule, production_map, visited_non_terminals) + 1);
             min_step = min(min_step, step);
         }
 
@@ -749,7 +755,7 @@ void out_k(string filename, int k) {
 }
 
 int main() {
-	int k = 3;
+	int k = 2;
 	Grammar grammar;
 	grammar.read("Grammar.txt");
 	grammar.build_first_k(k);
