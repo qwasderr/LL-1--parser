@@ -136,10 +136,16 @@
     <Text Include="Tests\TestRes\Test2Res.txt" />
     <Text Include="Tests\TestRes\Test3Res.txt" />
     <Text Include="Tests\TestRes\Test4Res.txt" />
+    <Text Include="Tests\TestRes\Test5Res.txt" />
+    <Text Include="Tests\TestRes\Test6Res.txt" />
+    <Text Include="Tests\TestRes\Test7Res.txt" />
     <Text Include="Tests\Tests\Test1.txt" />
     <Text Include="Tests\Tests\Test2.txt" />
     <Text Include="Tests\Tests\Test3.txt" />
     <Text Include="Tests\Tests\Test4.txt" />
+    <Text Include="Tests\Tests\Test5.txt" />
+    <Text Include="Tests\Tests\Test6.txt" />
+    <Text Include="Tests\Tests\Test7.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

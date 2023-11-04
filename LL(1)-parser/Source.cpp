@@ -1,168 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include <utility>
 #include <vector>
 #include <map>
 #include <set>
 #include <string>
 #include <algorithm>
-#include <stack>
-
 using namespace std;
-
-class T {
-private:
-    int number_of_rule;
-    string non_terminal;
-    map<string, vector<int>> L_number_of_rule;
-public:
-    T(int rule_number,  string non_terminal, map<string, vector<int>> L_number_of_rule) {
-        this->number_of_rule = rule_number;
-        this->non_terminal=std::move(non_terminal);
-        this->L_number_of_rule = std::move(L_number_of_rule);
-    }
-    T() {
-        this->number_of_rule = -1;
-        this->non_terminal = "";
-        this->L_number_of_rule["eps"] = {3};
-    }
-
-    [[nodiscard]] int getNumberOfRule() const {
-        return number_of_rule;
-    }
-
-    void setNumberOfRule(int numberOfRule) {
-        number_of_rule = numberOfRule;
-    }
-
-    [[nodiscard]] const string &getNonTerminal() const {
-        return non_terminal;
-    }
-
-    void setNonTerminal(const string &nonTerminal) {
-        non_terminal = nonTerminal;
-    }
-
-    [[nodiscard]] const map<string, vector<int>> &getLNumberOfRule() const {
-        return L_number_of_rule;
-    }
-
-    void setLNumberOfRule(const map<string, vector<int>> &lNumberOfRule) {
-        L_number_of_rule = lNumberOfRule;
-    }
-
-    // Comparison operator for '<'
-    bool operator<(const T& other) const {
-        if (this->number_of_rule != other.number_of_rule)
-            return this->number_of_rule < other.number_of_rule;
-
-        if (this->non_terminal != other.non_terminal)
-            return this->non_terminal < other.non_terminal;
-
-        return this->L_number_of_rule < other.L_number_of_rule;
-    }
-
-    // Comparison operator for '=='
-    bool operator==(const T& other) const {
-        return (this->number_of_rule == other.number_of_rule &&
-                this->non_terminal == other.non_terminal &&
-                this->L_number_of_rule == other.L_number_of_rule);
-    }
-};
-
-class Cell {
-public:
-    Cell() {}
-
-public:
-    Cell(const vector<string> &values, int ruleNumber, const set<int> &positionOfTRules,
-         const map<int, T> &positionOfTToReference) : values(values), rule_number(ruleNumber),
-                                                      positions_of_t_rules(positionOfTRules),
-                                                      position_of_T_to_reference(positionOfTToReference) {}
-
-    [[nodiscard]] const vector<string> &getValues() const {
-        return values;
-    }
-
-    void setValues(const vector<string> &val) {
-        Cell::values = val;
-    }
-
-    [[nodiscard]] int getRuleNumber() const {
-        return rule_number;
-    }
-
-    void setRuleNumber(int ruleNumber) {
-        rule_number = ruleNumber;
-    }
-
-    [[nodiscard]] const set<int> &getPositionOfTRules() const {
-        return positions_of_t_rules;
-    }
-
-    void setPositionOfTRules(const set<int> &positionOfTRules) {
-        positions_of_t_rules = positionOfTRules;
-    }
-
-    [[nodiscard]] const map<int, T> &getPositionOfTToReference() const {
-        return position_of_T_to_reference;
-    }
-
-    void setPositionOfTToReference(const map<int, T> &positionOfTToReference) {
-        position_of_T_to_reference = positionOfTToReference;
-    }
-
-private:
-    vector<string> values;
-    int rule_number;
-    // position inside values
-    set<int> positions_of_t_rules;
-    map<int, T> position_of_T_to_reference;
-};
-
-class StackItem {
-public:
-    bool is_terminal_() const {
-        return is_terminal;
-    }
-
-    void setIsTerminal(bool is_terminal) {
-        StackItem::is_terminal = is_terminal;
-    }
-
-    int getNumberOfTRule() const {
-        return number_of_T_rule;
-    }
-
-    void setNumberOfTRule(int numberOfTRule) {
-        number_of_T_rule = numberOfTRule;
-    }
-
-    const string &getItem() const {
-        return item;
-    }
-
-    void setItem(const string &item) {
-        StackItem::item = item;
-    }
-
-public:
-    explicit StackItem(int numberOfTRule) : number_of_T_rule(numberOfTRule) {
-        this->is_terminal = false;
-    }
-
-    explicit StackItem(string lexeme) : item(std::move(lexeme)) {
-        this->is_terminal = true;
-    }
-
-    StackItem() = default;
-
-private:
-    bool is_terminal{};
-    int number_of_T_rule{};
-    string item;
-};
-
 class Grammar {
 	vector <string> terminals;
 	vector <string> non_terminals;
@@ -170,8 +13,6 @@ class Grammar {
 
     // map<left side of the rule(non-terminal), map<number of the rule for the non-terminal, vector<string> of terminals/non-terminals for this rule>>
 	map<string, map<int, vector<string>>> rules;
-    // rules with not local order, but general
-	map<string, map<int, vector<string>>> rules_order;
 	/*
 	Example: A: + B A | eps
 	map<string, map<int, vector<string>>> let string=S, int=I, vector<string>=Strings
@@ -204,10 +45,6 @@ class Grammar {
 	*/
 
     map <string, map<string, vector<int>>> follow_k;
-    map <string, set<map<string, vector<int>>>> local_k;
-    map<string, map <T, Cell>> table_of_control;
-    map<string, map <string, int>> table_of_control_k_1;
-    map<int, T> T_rules;
 	set<string> epsilon; //for epsilon non-terminals
 	set<string> leftRecursive; //for left-recursive non-terminals 
 
@@ -283,6 +120,91 @@ public:
 		for (int i = 0; i < terminals.size(); ++i) if (s == terminals[i]) return true;
 		return false;
 	}
+
+	//OLD FUNCTIONALITY
+	//sum binary operation on the words of a language, k is the length
+	/*set<string> sumOfSets(set<string> set1, set<string> set2, int k) {
+		set<string> res;
+		for (string x : set1) {
+			for (string y : set2) {
+				if (x == "eps") res.insert(y.substr(0, k));
+				else if (y == "eps") res.insert(x.substr(0, k));
+				else res.insert((x + y).substr(0, k));
+			}
+		}
+		return res;
+	}*/
+
+	// first_k building, size is the length
+	/*void build_first_k(int size) {
+		set<string> temp;
+		string temp_term;
+		vector<string> rule; //vector for the rule (one of the right parts)
+		bool all_is_terminals;
+		for (int i = 0; i < non_terminals.size(); ++i) {
+			first_k[non_terminals[i]] = temp; //creating sets for each non-terminal
+		}
+		for (int i = 0; i < non_terminals.size(); ++i) {
+			int k = rules[non_terminals[i]].size(); // number of rules for the non-terminal
+			for (int j = 0; j < rules[non_terminals[i]].size();++j) { //we check each rule
+				rule = rules[non_terminals[i]][j];
+				all_is_terminals = true;
+				for (int b = 0; b < rule.size(); ++b) {
+					if (rule[b] != "eps") {
+						if (isNonTerminal(rule[b])) {
+							all_is_terminals = false;
+							break;
+						}
+					}
+				}
+				//if the rule consist only of terminals then we add it the the first_k(non-terminal[i])
+				if (all_is_terminals) {
+					temp_term = "";
+					for (int count = 0; count < size; ++count) { if (count >= rule.size()) break; temp_term += rule[count]; }
+					first_k[non_terminals[i]].insert(temp_term);
+				}
+			}
+		}
+		map<string, set<string>> temp_configuration=first_k; //to check when the iterative algorithm becomes stable
+		bool configuration = false,set_is_empty;
+		set<string> terminal_symbol, set_for_nonterminal;
+		while (configuration == false) { //while the algorithm isn't stable
+			for (int i = 0; i < non_terminals.size(); ++i) { //for each non-terminal
+				int k = rules[non_terminals[i]].size(); //number of rules for the non-terminal
+				for (int j = 0; j < rules[non_terminals[i]].size(); ++j) { //for each rule
+					rule = rules[non_terminals[i]][j];
+					set_for_nonterminal.clear(); //for iterative union of sets
+					if (isTerminal(rule[0])) set_for_nonterminal.insert(rule[0]); //if the first sym is terminal we add it to the set
+					else set_for_nonterminal = first_k[rule[0]]; //otherwise we add a set first_k(non-terminal[i])
+					if (set_for_nonterminal.empty()) continue;
+					else {
+						set_is_empty = false;
+						for (int b = 1; b < rule.size(); ++b) { //for each terminal/non-terminal in the rule
+							//getting previous first_k(non-terminal[i]) set or terminal symbol since first_k(terminal)={terminal}
+							if (isTerminal(rule[b])) {
+								terminal_symbol.clear(); terminal_symbol.insert(rule[b]);
+							}
+							else terminal_symbol = first_k[rule[b]];
+							if (terminal_symbol.empty()) {
+								set_is_empty = true;
+								break;
+							}
+							set_for_nonterminal = sumOfSets(set_for_nonterminal, terminal_symbol, size); //iterative union of sets
+						}
+						if (!set_is_empty) {
+							for (string x : set_for_nonterminal) {
+								first_k[non_terminals[i]].insert(x);
+							}
+						}  //if both of the sets weren't empty we unite set on the previous step and on the current
+					}
+				}
+
+			}
+			if (first_k == temp_configuration) configuration = true; // we check whether the algorithm has stabilized
+			else temp_configuration = first_k;
+		}
+		first_k.erase("eps");
+	}*/
 
 	//sum binary operation on the words of a language, k is the length
 	map<string, vector<int>> sumOfSets(map<string, vector<int>> set1, map<string, vector<int>> set2, int k) {
@@ -465,7 +387,14 @@ public:
                                 vector<string> follow_of_non_terminal = continuation_of_production(production, i + 1);
 
                                 // get first_k(β) = first_k(β_1) +_k first_k(β_2) +_k first_k(β_3) +_k ...
-                                map<string, vector<int>> first_k_from_follow = get_first_k_for(follow_of_non_terminal, k);
+                                map<string, vector<int>> first_k_from_follow;
+
+                                // in the beginning just add first_k(β_1) to map
+                                first_k_from_follow = mergeMaps(first_k_from_follow, get_first_k_for(follow_of_non_terminal[0]));
+                                // for each next β_j sum binary in with β_(j-1)
+                                for (int j = 1; j < follow_of_non_terminal.size(); j++) {
+                                    first_k_from_follow = sumOfSets(first_k_from_follow, get_first_k_for(follow_of_non_terminal[j]), k);
+                                }
 
                                 map<string, vector<int>> follow_k_from_rule_non_terminal = follow_k_current[rule_non_terminal];
                                 map<string, vector<int>> concat_result = sumOfSets(first_k_from_follow, follow_k_from_rule_non_terminal, k);
@@ -493,21 +422,7 @@ public:
         axiom_0_iteration["eps"] = {3};
     }
 
-    // get first_k(w) = first_k(w_1) +_k first_k(w_2) +_k first_k(w_3) +_k ...
-    map<string, vector<int>> get_first_k_for(vector<string> w, int k) {
-        map<string, vector<int>> first_k_for_w;
-
-        // in the beginning just add first_k(w_1) to map
-        first_k_for_w = mergeMaps(first_k_for_w, get_first_k_for_symbol(w[0]));
-        // for each next w_j sum binary in with w_(j-1)
-        for (int j = 1; j < w.size(); j++) {
-            first_k_for_w = sumOfSets(first_k_for_w, get_first_k_for_symbol(w[j]), k);
-        }
-        
-        return first_k_for_w;
-    }
-
-    map<string, vector<int>> get_first_k_for_symbol(const string &symbol) {
+    map<string, vector<int>> get_first_k_for(const string& symbol) {
         map<string, vector<int>> symbol_set;
         if (isNonTerminal(symbol)) {
             symbol_set = first_k2[symbol];
@@ -526,7 +441,25 @@ public:
         return continuation;
     }
 
-    static map<string, vector<int>> mergeMaps(const map<string, vector<int>>& map1, const map<string, vector<int>>& map2) {
+    static void printMap(const map<string, vector<int>>& myMap) {
+        for (const auto& entry : myMap) {
+            cout << entry.first << ": ";
+
+            for (int value : entry.second) {
+                cout << value << " ";
+            }
+
+            cout << endl;
+        }
+    }
+
+    void print_3_step(map<string, vector<int>> mergedMap) {
+        cout << "!!! NOT EQUAL" << endl;
+        cout << "Updated map:" << endl;
+        printMap(mergedMap);
+    }
+
+    map<string, vector<int>> mergeMaps(const map<string, vector<int>>& map1, const map<string, vector<int>>& map2) {
         map<string, vector<int>> mergedMap = map1;
 
         for (const auto& entry : map2) {
@@ -600,581 +533,6 @@ public:
         return min_step;
     }
 
-    /**
-     * Algorithm:
-     * σ_n(S, A_i) = σ_(n-1)(S, A_i) with L, where:
-     *
-     * A_j -> w_1 A_i w_2
-     *
-     * L = first_k(w_2) +_k L_p
-     *
-     * L_p ∈ Local_k(S, A_j)
-     *
-     * Hint: how to check yourself: - follow_k(A_i) = ∪ L_i, L_i ∈ Local_k(S, A_i)
-     *
-     * */
-    void build_local_k(int k) {
-
-        for (auto &non_terminal: non_terminals) {
-            local_k[non_terminal] = {};
-        }
-
-        //We need to know for each rule on what min step it could be applied. 
-        map<string, int> min_step_for_non_terminals = calculate_min_requiered_steps();
-        initialize_local_k_with_axiom();
-
-        bool changes_made;
-        int iteration_number = 1;
-        do {
-            changes_made = false;
-
-            //for comparing results of previous iteration with current.
-            map <string, set<map<string, vector<int>>>> local_k_current;
-            local_k_current.insert(local_k.begin(), local_k.end());
-
-            for (const auto &rule_entry: rules) {
-                string rule_non_terminal = rule_entry.first;
-                int min_step_for_start_non_terminal = min_step_for_non_terminals[rule_non_terminal];
-
-                for (const auto &entry: rule_entry.second) {
-                    int rule_number = entry.first;
-                    vector<string> production = entry.second;
-
-                    // For each production Non_terminal -> αBβ:
-                    for (int i = 0; i < production.size(); i++) {
-                        string maybe_non_terminal = production[i];
-                        if (isNonTerminal(maybe_non_terminal)) {
-                            // if on this step current Non_terminal could be produced, nothing to change. It's similar to "-" in the book. See example for C, D in the book.
-                            if (iteration_number >= min_step_for_start_non_terminal) {
-
-                                // retrieve continuation = w
-                                vector<string> follow_of_non_terminal = continuation_of_production(production, i + 1);
-
-                                // get first_k(w) = first_k(w_1) +_k first_k(w_2) +_k first_k(w_3) +_k ...
-                                map<string, vector<int>> first_k_from_w2 = get_first_k_for(follow_of_non_terminal, k);
-
-                                // get set of L_p for A_j
-                                set<map<string, vector<int>>> &local_k_current_for_rule_non_terminal = local_k_current[rule_non_terminal];
-
-                                // set before adding:
-                                set<map<string, vector<int>>> local_k_current_for_maybe_non_terminal = local_k_current[maybe_non_terminal];
-                                // set where new sets will be added:
-                                set<map<string, vector<int>>> &local_k_for_maybe_non_terminal = local_k[maybe_non_terminal];
-
-                                for (const auto &set_of_possible_follows: local_k_current_for_rule_non_terminal) {
-                                    const map<string, vector<int>> &new_set_of_possible_follows = sumOfSets(first_k_from_w2, set_of_possible_follows, k);
-                                    local_k_for_maybe_non_terminal.insert(new_set_of_possible_follows);
-                                }
-
-                                // Step 3: check should we stop to iterate or not
-                                if (local_k_for_maybe_non_terminal != local_k_current_for_maybe_non_terminal) {
-                                    changes_made = true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            iteration_number += 1;
-        } while (changes_made);
-    }
-
-    void initialize_local_k_with_axiom() {
-        set<map<string, vector<int>>> &axiom_0_iteration = local_k[axiom];
-        map<string, vector<int>> map_with_eps;
-        map_with_eps["eps"] = {3};
-        axiom_0_iteration.insert(map_with_eps);
-    }
-
-    void build_table_of_control(int k) {
-        if(k != 1) {
-            build_table_of_control_k_larger_1(k);
-        } else {
-            build_table_of_control_k_1(k);
-        }
-    }
-
-    void build_table_of_control_k_larger_1(int k) {
-        // Generate  Σ_k
-        vector<string> combinations = get_combination_of_terminal(terminals, k);
-        initialize_table_of_control(combinations, k);
-
-        int number_of_tables = calculate_number_of_tables();
-        T_rules = getT_Rules(number_of_tables);
-        int counter_of_t_rules = 1;
-
-        // Iterate over each T_rule, starting from 0 to next ones.
-        for (const auto &t_rule: T_rules) {
-
-            string non_terminal = t_rule.second.getNonTerminal();
-            map<string, vector<int>> L_number_of_rule = t_rule.second.getLNumberOfRule();
-            map<int, vector<string>> rules_of_non_terminal = rules_order[non_terminal];
-
-            // A -> w, where w = A_1 a_1 A_2 a_2 A_3 a_3 ...
-            for (const auto &rule: rules_of_non_terminal) {
-                // w
-                vector<string> w = rule.second;
-
-                // u = First_k(w) +_k L_previous
-                map<string, vector<int>> u_as_map = sumOfSets(get_first_k_for(w, k), L_number_of_rule, k);
-                vector<string> u = extract_keys_from_map(u_as_map);
-
-                // position inside w -> T rule
-                map<int, T> position_of_t_rules;
-                set<int> set_of_positions;
-
-                for (int i =0; i < w.size(); i++) {
-                    string w_i = w[i];
-                    if(isNonTerminal(w_i)) {
-
-                        // retrieve continuation = w_(i+1_ w_(i+2) ...
-                        vector<string> follow_of_non_terminal = continuation_of_production(w, i + 1);
-                        map<string, vector<int>> first_k_for_continuation = get_first_k_for(follow_of_non_terminal, k);
-                        // create new L for new T
-                        const map<string, vector<int>> L_new = sumOfSets(first_k_for_continuation, L_number_of_rule, k);
-
-                        // create T. If new rule requires index > max, it means we already check this (T4 = T2 in example, try to find correspond T)
-                        T T_new = *new T(counter_of_t_rules, w_i, L_new);
-                        if (counter_of_t_rules >= number_of_tables) {
-                            for (const auto &item: T_rules) {
-                                if(item.second.getNonTerminal() == w_i && item.second.getLNumberOfRule() == L_new) {
-                                    T_new = item.second;
-                                }
-                            }
-                        }
-                        // update data for cell value
-                        position_of_t_rules[i] = T_new;
-                        set_of_positions.insert(i);
-                        T_rules[counter_of_t_rules++] = T_new;
-                    }
-                }
-
-                Cell new_cell = *new Cell(w, rule.first, set_of_positions, position_of_t_rules);
-                // Update table of control for current rule. u_i ∈ u
-                for (const auto &u_i: u) {
-                    table_of_control[u_i][t_rule.second] = new_cell;
-                }
-            }
-
-            // To stop traverse
-            if(counter_of_t_rules > number_of_tables) break;
-        }
-    }
-
-    void build_table_of_control_k_1(int k) {
-        // Generate  Σ_k
-        vector<string> combinations = get_combination_of_terminal(terminals, k);
-        initialize_table_of_control(combinations, k);
-
-        // Iterate over each rule.
-        for (const auto &non_terminal_to_rules: rules_order) {
-
-            string non_terminal = non_terminal_to_rules.first;
-            map<int, vector<string>> rules_of_non_terminal = non_terminal_to_rules.second;
-
-            // A -> w, where w = A_1 a_1 A_2 a_2 A_3 a_3 ...
-            for (const auto &rule: rules_of_non_terminal) {
-                // w
-                vector<string> w = rule.second;
-
-                // u = First_k(w) +_k Follow_k(A) (in our case k = 1 of course)
-                map<string, vector<int>> u_as_map = sumOfSets(get_first_k_for(w, k), follow_k[non_terminal], k);
-                vector<string> u = extract_keys_from_map(u_as_map);
-
-                // Update table of control for current rule. u_i ∈ u
-                for (const auto &u_i: u) {
-                    table_of_control_k_1[u_i][non_terminal] = rule.first;
-                }
-            }
-        }
-    }
-
-    void analyze_w_with_out(const vector<string>& w, int k, string filename) {
-        if(k != 1) {
-            analyzer_k_larger_than_1(w, k, filename);
-        }
-        else {
-            analyzer_for_k_1(w, k, filename);
-        }
-    }
-
-    void analyzer_k_larger_than_1(const vector<string>& w, int k, string filename) {
-        ofstream file(filename, ios::app);
-        file << "LL(" << k << ") analyzer started for " << vector_to_string(w, true) << endl;
-
-        stack<StackItem> stack;
-
-        // add T_0
-        stack.push(*new StackItem(0));
-
-        //analyze of pi chain
-        vector<int> pi_z_dashkom;
-
-        vector<string> chain(w.begin(), w.end());
-
-        // if stack ended - we finish: lexeme is present still - ERROR, lexeme is ended as well - analyze is good.
-        int index = 0;
-        vector<string> current_lexeme;
-
-        bool err_find = false;
-        while (!stack.empty() && !err_find) {
-            StackItem item = stack.top();
-            printStack(stack, file);
-            stack.pop();
-
-            // read lexeme (if possible of course)
-            int size_before = current_lexeme.size();
-            current_lexeme = read_current_lexeme(current_lexeme, chain, index, k);
-            int index_update = k - size_before;
-            index += index_update;
-
-            file << " Current lexeme: " << vector_to_string(current_lexeme, true) << endl;
-
-            if (!item.is_terminal_()) {
-                string current_lexeme_combine = vector_to_string(current_lexeme, false);
-                // determinate what will replace this item of stack:
-                Cell &cell = table_of_control[current_lexeme_combine][T_rules[item.getNumberOfTRule()]];
-                vector<string> to_replace = cell.getValues();
-
-                // If we didn't find to what replace - syntax error!
-                if (to_replace.empty()) {
-                    file << "Error! Any rules that could lead us to " << current_lexeme_combine << endl;
-                    file <<"Pi chain before error - ";
-                    err_find = true;
-                }
-
-                //Create new stack items based on cell value. If it's T - pass T number, otherwise - lexeme.
-                vector<StackItem> new_items;
-                set<int> positions_of_T = cell.getPositionOfTRules();
-                for (int i = 0; i < to_replace.size(); i++) {
-                    if (positions_of_T.count(i) > 0) {
-                        map<int, T> position_to_T = cell.getPositionOfTToReference();
-                        new_items.push_back(*new StackItem(position_to_T[i].getNumberOfRule()));
-                    } else {
-                        new_items.push_back(*new StackItem(to_replace[i]));
-                    }
-                }
-
-                // add rule number to pi chain
-                if(!err_find) pi_z_dashkom.push_back(cell.getRuleNumber());
-
-                std::reverse(new_items.begin(), new_items.end());
-                for (const auto &new_item: new_items) {
-                    stack.push(new_item);
-                }
-            } else {
-                const string &lexeme_on_head = item.getItem();
-                if (!current_lexeme.empty() && current_lexeme[0] == lexeme_on_head) {
-                    current_lexeme.erase(current_lexeme.begin());
-                } else {
-                    file << "Error! " << "lexeme - " << vector_to_string(current_lexeme, true)
-                         << ", head of stack - " << item.getItem() << endl;
-                    file <<" Pi chain before error - ";
-                    err_find = true;
-                }
-            }
-
-        }
-
-        // last output if no error
-        if(!err_find) {
-            printStack(stack, file);
-            file << " Current lexeme: " << vector_to_string(current_lexeme, true) << endl;
-
-            if (!current_lexeme.empty()) {
-                file << "!!!Error!!! " << "Stack is empty, but chain is not empty yet! Pi chain before last error is - ";
-            } else {
-                file << "Successfully parsed: Pi chain is - ";
-            }
-        }
-
-        // Pi chain out
-        for (const auto &item: pi_z_dashkom) {
-            file << to_string(item) << " ";
-        }
-
-        file << endl;
-        file.close();
-    }
-
-    void analyzer_for_k_1(const vector<string>& w, int k, string filename) {
-        ofstream file(filename, ios::app);
-        file << "LL(" << k << ") analyzer started for " << vector_to_string(w, true) << endl;
-
-        stack<string> stack;
-
-        // add axiom
-        stack.push(axiom);
-
-        //analyze of pi chain
-        vector<int> pi_z_dashkom;
-
-        vector<string> chain(w.begin(), w.end());
-
-        // if stack ended - we finish: lexeme is present still - ERROR, lexeme is ended as well - analyze is good.
-        int index = 0;
-        vector<string> current_lexeme;
-
-        bool err_find = false;
-        while (!stack.empty() && !err_find) {
-            string item = stack.top();
-            printStack(stack, file);
-            stack.pop();
-
-            // read lexeme (if possible of course)
-            int size_before = current_lexeme.size();
-            current_lexeme = read_current_lexeme(current_lexeme, chain, index, k);
-            int index_update = k - size_before;
-            index += index_update;
-
-            // should be 1 symbol all time, but who knows...
-            file << " Current lexeme: " << vector_to_string(current_lexeme, true) << endl;
-
-            if (isNonTerminal(item)) {
-                // current lexeme
-                string current_lexeme_combine = vector_to_string(current_lexeme, false);
-
-                // determinate what will replace this item of stack:
-                if (current_lexeme_combine.empty()) current_lexeme_combine = "eps";
-                int rule_number = table_of_control_k_1[current_lexeme_combine][item];
-
-                vector<string> to_replace = rules_order[item][rule_number];
-
-                // If we didn't find to what replace - syntax error!
-                if (to_replace.empty()) {
-                    file << "Error! Any rules that could lead us to " << current_lexeme_combine << " from " << item << endl;
-                    file << item << " in current step except only " << vector_to_string(find_expecting_terminals(item), true) << endl;
-                    file <<"Pi chain before error - ";
-                    err_find = true;
-                }
-
-                //Create new stack items based on new values.
-                std::reverse(to_replace.begin(), to_replace.end());
-                for (const auto &replace: to_replace) {
-                    if(replace != "eps") { stack.push(replace); }
-                }
-
-                // add rule number to pi chain
-                if(!err_find) pi_z_dashkom.push_back(rule_number);
-            } else {
-                if (!current_lexeme.empty() && current_lexeme[0] == item) {
-                    current_lexeme.erase(current_lexeme.begin());
-                } else {
-                    file << "Error! " << "Your lexeme - " << vector_to_string(current_lexeme, true) << ", but from " << item << " any transitions with your lexeme! " << endl;
-                    file << item << " in current step except only " << vector_to_string(find_expecting_terminals(item), true);
-                    file <<" Pi chain before error - ";
-                    err_find = true;
-                }
-            }
-
-        }
-
-        // last output if no error
-        if (!err_find) {
-            printStack(stack, file);
-            file << " Current lexeme: " << vector_to_string(current_lexeme, true) << endl;
-
-            if (!current_lexeme.empty()) {
-                file << "!!!Error!!! " << "Stack is empty, but chain is not empty yet! Pi chain before last error is - ";
-            } else {
-                file << "Successfully parsed: Pi chain is - ";
-            }
-        }
-
-        // Pi chain out
-        for (const auto &item: pi_z_dashkom) {
-            file << to_string(item) << " ";
-        }
-
-        file << endl << endl;
-        file.close();
-    }
-
-    vector<string> find_expecting_terminals(const string& non_terminal_to_find) {
-        vector<string> result;
-        for (const auto &terminal_to_map: table_of_control_k_1) {
-            string terminal = terminal_to_map.first;
-            for (const auto &non_terminal_to_rule: terminal_to_map.second) {
-                string non_terminal = non_terminal_to_rule.first;
-                int rule = non_terminal_to_rule.second;
-                if (non_terminal_to_find == non_terminal && rule != 0) result.push_back(terminal);
-            }
-        }
-        return result;
-    }
-
-    void printStack(stack<StackItem> in, ofstream& file) {
-        stack<StackItem> copy_of_in(std::move(in));
-        reverseStack(copy_of_in);
-        file << "Stack: ";
-        if(copy_of_in.empty()) {
-            file << "(empty)";
-        }
-        while (!copy_of_in.empty()) {
-            StackItem item =  copy_of_in.top();
-            if(item.is_terminal_()) {
-                file << item.getItem() << " ";
-            } else {
-                file << "T_" << item.getNumberOfTRule() << " ";
-            }
-            copy_of_in.pop();
-        }
-    }
-
-    void printStack(stack<string> in, ofstream& file) {
-        stack<string> copy_of_in(std::move(in));
-        file << "Stack: ";
-        if(copy_of_in.empty()) {
-            file << "(empty)";
-        }
-        while (!copy_of_in.empty()) {
-            string item =  copy_of_in.top();
-             file << item << " ";
-            copy_of_in.pop();
-        }
-    }
-
-    template<typename T>
-    void insertAtBottom(std::stack<T>& stack, const T& value) {
-        if (stack.empty()) {
-            stack.push(value);
-            return;
-        }
-
-        T top = stack.top();
-        stack.pop();
-        insertAtBottom(stack, value);
-        stack.push(top);
-    }
-
-    template<typename T>
-    void reverseStack(std::stack<T>& stack) {
-        if (!stack.empty()) {
-            T top = stack.top();
-            stack.pop();
-            reverseStack(stack);
-            insertAtBottom(stack, top);
-        }
-    }
-    
-    static vector<string> read_current_lexeme(vector<string> to, vector<string> from, int started_from, int max_length) {
-        while(to.size() < max_length && started_from < from.size()) {
-            to.push_back(from[started_from++]);
-        }
-        return to;
-    }
-
-    vector<string> get_combination_of_terminal(vector<string> input, int k) {
-        map<string, vector<int>> input_map;
-        input_map["eps"] = {3};
-        for (const auto &item: input) {
-            input_map[item] = {static_cast<int>(input.size())};
-        }
-
-        map<string, vector<int>> result(input_map.begin(), input_map.end());
-
-        int iteration = 2;
-        while (iteration <= k) {
-            result = mergeMaps(result, sumOfSets(result, input_map, iteration));
-            iteration++;
-        }
-
-        return extract_keys_from_map(result);
-    }
-
-    static string vector_to_string(const vector<string>& vect, bool withSpace) {
-        string result;
-        for (const auto &item: vect) {
-            result += item;
-            if (withSpace) result += " ";
-        }
-        return result;
-    }
-
-    static vector<string> extract_keys_from_map(const map<string, vector<int>>& map) {
-        vector<string> result;
-        for (const auto &item: map) {
-            result.push_back(item.first);
-        }
-        return result;
-    }
-
-    map<int, T> getT_Rules(int number_of_tables) {
-        map<int, T> T_rules;
-        map<string, vector<int>> empty_set;
-        empty_set["eps"] = {3};
-        T T_0 = *new T(0, axiom, empty_set);
-        T_rules[0] = (T_0);
-        for(int i = 1; i < number_of_tables; i++) {
-            // fill out with empty values
-            T T_i = *new T(i, "", empty_set);
-            T_rules[i] = T_i;
-
-        }
-        return T_rules;
-    }
-
-    void build_order_rules() {
-        int counter = 1;
-
-        // first change for axiom
-        map<int, vector<string>> axiom_rules = rules[axiom];
-        map<int, vector<string>> axiom_with_correct_order;
-        for (const auto &item: axiom_rules) {
-            axiom_with_correct_order[counter++] = item.second;
-        }
-        rules_order[axiom] = axiom_with_correct_order;
-
-
-        for (const auto &rule: rules) {
-            string non_terminal_rule = rule.first;
-            if(non_terminal_rule != axiom) {
-                map<int, vector<string>> rules_non_order = rule.second;
-                map<int, vector<string>> rules_correct_order;
-                for (const auto &item: rules_non_order) {
-                    rules_correct_order[counter++] = item.second;
-                }
-
-                rules_order[non_terminal_rule] = rules_correct_order;
-            }
-        }
-    }
-
-    void order_rules_out_file(const string& filename, bool spaces) {
-        ofstream file(filename, ios::app);
-        file << "Order rules for our grammar: " << endl;
-        map<int, string> result;
-        for (const auto &non_terminal_to_rules: rules_order) {
-            string non_terminal = non_terminal_to_rules.first;
-            map<int, vector<string>> ruless = non_terminal_to_rules.second;
-            for (const auto &rule: ruless) {
-                string pretty_string = non_terminal + " -> " + vector_to_string(rule.second, true) + "\t\t" + "(" + to_string(rule.first) + ")";
-                result[rule.first] = pretty_string;
-            }
-        }
-
-        for (const auto &item: result) {
-            file << item.second << endl;
-        }
-
-        file << endl;
-        file.close();
-    }
-
-    void initialize_table_of_control(const vector<string>& combinations, int k) {
-        for (auto& combination: combinations) {
-            table_of_control[combination] = {};
-            table_of_control_k_1[combination] = {};
-        }
-    }
-
-    int calculate_number_of_tables() {
-        int counter = 0;
-        for (const auto &local_k_item: local_k) {
-            counter += local_k_item.second.size();
-        }
-        return counter;
-    }
 
 	//searching for epsilon non-terminals
 	void epsilon_non_term() {
@@ -1324,107 +682,6 @@ public:
 		file.close();
 	}
 
-    //follow_k sets output to the file
-    void table_of_control_out_file(const string& filename, bool spaces, int k) {
-        if( k!= 1) {
-            table_of_control_k_larger_1_out_file(filename, spaces);
-        } else {
-            table_of_control_out_for_k_1(filename, spaces);
-        }
-    }
-
-    void table_of_control_out_for_k_1(const string& filename, bool spaces) {
-        ofstream file(filename, ios::app);
-
-        file << "Table of control for LL(1)" << endl;
-
-        for (const auto& entry : table_of_control_k_1) {
-            const string combination = entry.first;
-            const map<string, int> innerMap = entry.second;
-
-            file << "Terminal: " << combination << endl;
-
-            for (const auto& innerEntry : innerMap) {
-                const string non_terminal = innerEntry.first;
-                const int rule_number = innerEntry.second;
-                file << non_terminal << " - " << rule_number << endl;
-            }
-
-            file << endl;
-        }
-
-        file.close();
-    }
-
-    void table_of_control_k_larger_1_out_file(const string& filename, bool spaces) {
-        ofstream file(filename, ios::app);
-
-        file << "Table of control for LL(k) k > 1" << endl;
-
-        for (const auto& entry : table_of_control) {
-            const string combination = entry.first;
-            const map<T, Cell> innerMap = entry.second;
-
-            file << "Combination: " << combination << endl;
-
-            for (const auto& innerEntry : innerMap) {
-                const T& tObject = innerEntry.first;
-                const Cell& cellObject = innerEntry.second;
-
-                file << "T_" << tObject.getNumberOfRule() << ": ";
-                for (int i = 0; i < cellObject.getValues().size(); i++) {
-                    string w_i = cellObject.getValues()[i];
-                    if (cellObject.getPositionOfTRules().count(i) > 0) {
-                        map<int, T> position_to_T_rule = cellObject.getPositionOfTToReference();
-                        file << "T_" << position_to_T_rule[i].getNumberOfRule() << " ";
-                    } else {
-                        file << w_i << " ";
-                    }
-                }
-                file << " ; rule - " << cellObject.getRuleNumber();
-                file << endl;
-            }
-
-            file << endl;
-        }
-
-        file.close();
-    }
-
-    //local_k sets output to the file
-    void local_k_out_file(const string& filename, bool spaces) { //do we need spaces between terminals
-        ofstream file(filename, ios::app);
-        int size, position = 0, pos_mas = 0;
-        file << "Local_k for no terminals:" << endl;
-        for (int i = 0; i < non_terminals.size(); ++i) {
-            file << non_terminals[i] << ": {";
-            string set_to_out;
-            for (const auto &set: local_k[non_terminals[i]]) {
-                size = 0;
-                set_to_out += " { ";
-                for (const auto &x: set) {
-                    if (size < set.size() - 1) {
-                        if (spaces)  outWithSpacesToFile(x, true, file);
-                        else set_to_out += x.first + ", ";
-                    }
-                    else if (spaces) outWithSpacesToFile(x, false, file); else set_to_out += x.first;
-                    ++size;
-                }
-                set_to_out += " },";
-            }
-
-            if (!set_to_out.empty()) {
-                set_to_out.pop_back();
-            }
-
-            file << set_to_out;
-
-            file << " }" << endl;
-        }
-        file << endl;
-        file.close();
-    }
-
 	//follow_k sets output to the file
 	void follow_k_out_file(const string& filename, bool spaces) { //do we need spaces between terminals
 		ofstream file(filename, ios::app);
@@ -1498,26 +755,16 @@ void out_k(string filename, int k) {
 }
 
 int main() {
-	int k = 1;
-    vector<string> w = {"(", "a", "+", "a", ")", "*", "a"};
-    string grammar_file = "Grammar.txt";
-    string output_file = "Output.txt";
+	int k = 2;
 	Grammar grammar;
-	grammar.read(grammar_file);
-    grammar.build_order_rules();
+	grammar.read("Grammar.txt");
 	grammar.build_first_k(k);
-    grammar.first_k_out_file(output_file,false);
-    grammar.build_follow_k(k);
-    grammar.follow_k_out_file(output_file,false);
-    grammar.build_local_k(k);
-    grammar.local_k_out_file(output_file, false);
-    grammar.order_rules_out_file(output_file, false);
-    grammar.build_table_of_control(k);
-    grammar.table_of_control_out_file(output_file, false, k);
-    grammar.analyze_w_with_out(w, k, output_file);
-    grammar.epsilon_non_term();
-    grammar.epsilon_out_file(output_file);
-    out_k(output_file, k);
+	grammar.build_follow_k(k);
+	grammar.epsilon_non_term();
+	grammar.first_k_out_file("Output.txt",true);
+	grammar.follow_k_out_file("Output.txt",true);
+	grammar.epsilon_out_file("Output.txt");
+	out_k("Output.txt", k);
 	grammar.leftRecursive_get();
-	grammar.left_recursive_out_file(output_file);
+	grammar.left_recursive_out_file("Output.txt");
 }
