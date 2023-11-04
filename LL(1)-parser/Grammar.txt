@@ -1,4 +1,7 @@
 ﻿%start S
-%token a b
-S: a b A | eps
-A: S a a | b
+%token a + ( ) *
+S: B A
+A: + B A | eps
+B: D C
+C: * D C | eps
+D: ( S ) | a
