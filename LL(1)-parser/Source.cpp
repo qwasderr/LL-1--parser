@@ -6,6 +6,8 @@
 #include <set>
 #include <string>
 #include <algorithm>
+#include <stack>
+
 using namespace std;
 
 class T {
@@ -112,11 +114,53 @@ public:
 
 private:
     vector<string> values;
-    int rule_number{};
-
+    int rule_number;
     // position inside values
     set<int> positions_of_t_rules;
     map<int, T> position_of_T_to_reference;
+};
+
+class StackItem {
+public:
+    bool is_terminal_() const {
+        return is_terminal;
+    }
+
+    void setIsTerminal(bool is_terminal) {
+        StackItem::is_terminal = is_terminal;
+    }
+
+    int getNumberOfTRule() const {
+        return number_of_T_rule;
+    }
+
+    void setNumberOfTRule(int numberOfTRule) {
+        number_of_T_rule = numberOfTRule;
+    }
+
+    const string &getItem() const {
+        return item;
+    }
+
+    void setItem(const string &item) {
+        StackItem::item = item;
+    }
+
+public:
+    explicit StackItem(int numberOfTRule) : number_of_T_rule(numberOfTRule) {
+        this->is_terminal = false;
+    }
+
+    explicit StackItem(string lexeme) : item(std::move(lexeme)) {
+        this->is_terminal = true;
+    }
+
+    StackItem() = default;
+
+private:
+    bool is_terminal{};
+    int number_of_T_rule{};
+    string item;
 };
 
 class Grammar {
@@ -162,6 +206,7 @@ class Grammar {
     map <string, map<string, vector<int>>> follow_k;
     map <string, set<map<string, vector<int>>>> local_k;
     map<string, map <T, Cell>> table_of_control;
+    map<int, T> T_rules;
 	set<string> epsilon; //for epsilon non-terminals
 	set<string> leftRecursive; //for left-recursive non-terminals 
 
@@ -659,13 +704,12 @@ public:
     }
 
     void build_table_of_control(int k) {
-        // TODO: generateCombinations(terminals, k);
         // Generate  Σ_k
-        vector<string> combinations = get_combination_of_non_terminal(terminals, k);
+        vector<string> combinations = get_combination_of_terminal(terminals, k);
         initialize_table_of_control(combinations, k);
 
         int number_of_tables = calculate_number_of_tables();
-        map<int, T> T_rules = getT_Rules(number_of_tables);
+        T_rules = getT_Rules(number_of_tables);
         int counter_of_t_rules = 1;
 
         // Iterate over each T_rule, starting from 0 to next ones.
@@ -726,7 +770,138 @@ public:
         }
     }
 
-    vector<string> get_combination_of_non_terminal(vector<string> input, int k) {
+    void analyze_w_with_out(const vector<string>& w, int k, string filename) {
+        ofstream file(filename, ios::app);
+        file << "LL(" << k << ") analyzer started for " << vector_to_string(w, true) << endl;
+
+        stack<StackItem> stack;
+
+        // add T_0
+        stack.push(*new StackItem(0));
+
+        //analyze of pi chain
+        vector<int> pi_z_dashkom;
+
+        vector<string> chain(w.begin(), w.end());
+
+        // if stack ended - we finish: lexeme is present still - ERROR, lexeme is ended as well - analyze is good.
+        int index = 0;
+        vector<string> current_lexeme;
+
+        while(!stack.empty()) {
+            StackItem item = stack.top();
+            printStack(stack, file);
+            stack.pop();
+
+            // read lexeme (if possible of course)
+            int size_before = current_lexeme.size();
+            current_lexeme = read_current_lexeme(current_lexeme, chain, index, k);
+            int index_update = k - size_before;
+            index += index_update;
+
+            file << " Current lexeme: " << vector_to_string(current_lexeme, true) << endl;
+
+            if(!item.is_terminal_()) {
+                string current_lexeme_combine = vector_to_string(current_lexeme, false);
+                // determinate what will replace this item of stack:
+                Cell &cell = table_of_control[current_lexeme_combine][T_rules[item.getNumberOfTRule()]];
+                vector<string> to_replace = cell.getValues();
+
+                //Create new stack items based on cell value. If it's T - pass T number, otherwise - lexeme.
+                vector<StackItem> new_items;
+                set<int> positions_of_T = cell.getPositionOfTRules();
+                for (int i = 0; i < to_replace.size(); i++) {
+                    if(positions_of_T.count(i) > 0) {
+                        map<int, T> position_to_T= cell.getPositionOfTToReference();
+                        new_items.push_back(*new StackItem(position_to_T[i].getNumberOfRule()));
+                    } else {
+                        new_items.push_back(*new StackItem(to_replace[i]));
+                    }
+                }
+
+                // add rule number to pi chain
+                pi_z_dashkom.push_back(cell.getRuleNumber());
+
+                std::reverse(new_items.begin(), new_items.end());
+                for (const auto &new_item: new_items) {
+                    stack.push(new_item);
+                }
+            } else {
+                const string& lexeme_on_head = item.getItem();
+                if(!current_lexeme.empty() && current_lexeme[0] == lexeme_on_head) {
+                    current_lexeme.erase(current_lexeme.begin());
+                } else {
+                    file << "Error! " << "lexeme - " << vector_to_string(current_lexeme, true) << ", head of stack - " << item.getItem() << endl;
+                }
+            }
+            
+        }
+
+        // last output
+        printStack(stack, file);
+        file << " Current lexeme: " << vector_to_string(current_lexeme, true) << endl;
+
+        if(!current_lexeme.empty()) {
+            file << "Error! " << "Stack is empty, but chain is not empty yet! "<< endl;
+        } else {
+            file << "Pi chain is - ";
+            for (const auto &item: pi_z_dashkom) {
+                file << to_string(item) << " ";
+            }
+            file << endl;
+        }
+
+        file << endl;
+        file.close();
+    }
+
+    void printStack(stack<StackItem> in, ofstream& file) {
+        stack<StackItem> copy_of_in(std::move(in));
+        reverseStack(copy_of_in);
+        file << "Stack: ";
+        if(copy_of_in.empty()) {
+            file << "(empty)";
+        }
+        while (!copy_of_in.empty()) {
+            StackItem item =  copy_of_in.top();
+            if(item.is_terminal_()) {
+                file << item.getItem() << " ";
+            } else {
+                file << "T_" << item.getNumberOfTRule() << " ";
+            }
+            copy_of_in.pop();
+        }
+    }
+
+    void insertAtBottom(std::stack<StackItem>& stack, StackItem value) {
+        if (stack.empty()) {
+            stack.push(value);
+            return;
+        }
+
+        StackItem top = stack.top();
+        stack.pop();
+        insertAtBottom(stack, value);
+        stack.push(top);
+    }
+
+    void reverseStack(std::stack<StackItem>& stack) {
+        if (!stack.empty()) {
+            StackItem top = stack.top();
+            stack.pop();
+            reverseStack(stack);
+            insertAtBottom(stack, top);
+        }
+    }
+    
+    vector<string> read_current_lexeme(vector<string> to, vector<string> from, int started_from, int max_length) {
+        while(to.size() < max_length && started_from < from.size()) {
+            to.push_back(from[started_from++]);
+        }
+        return to;
+    }
+
+    vector<string> get_combination_of_terminal(vector<string> input, int k) {
         set<string> result(input.begin(), input.end());
         result.insert("eps");
 
@@ -753,10 +928,11 @@ public:
         return vector(result.begin(), result.end());
     }
 
-    static string vectorToString(const vector<string>& vect) {
+    static string vector_to_string(const vector<string>& vect, bool withSpace) {
         string result;
         for (const auto &item: vect) {
-            result += item + " ";
+            result += item;
+            if (withSpace) result += " ";
         }
         return result;
     }
@@ -818,7 +994,7 @@ public:
             string non_terminal = non_terminal_to_rules.first;
             map<int, vector<string>> ruless = non_terminal_to_rules.second;
             for (const auto &rule: ruless) {
-                string pretty_string = non_terminal + " -> " + vectorToString(rule.second) + "\t\t" + "(" + to_string(rule.first) + ")";
+                string pretty_string = non_terminal + " -> " + vector_to_string(rule.second, true) + "\t\t" + "(" + to_string(rule.first) + ")";
                 result[rule.first] = pretty_string;
             }
         }
@@ -1137,6 +1313,7 @@ void out_k(string filename, int k) {
 
 int main() {
 	int k = 2;
+    vector<string> w = {"a", "b", "a", "b", "b", "a", "a", "a"};
     string grammar_file = "Grammar.txt";
     string output_file = "Output.txt";
 	Grammar grammar;
@@ -1151,6 +1328,7 @@ int main() {
     grammar.order_rules_out_file(output_file, false);
     grammar.build_table_of_control(k);
     grammar.table_of_control_out_file(output_file, false);
+    grammar.analyze_w_with_out(w, k, output_file);
     grammar.epsilon_non_term();
     grammar.epsilon_out_file(output_file);
     out_k(output_file, k);

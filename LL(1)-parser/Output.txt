@@ -41,6 +41,21 @@ Combination: bb
 Combination: eps
 T_0: eps  ; rule - 2
 
+LL(2) analyzer started for a b a b b a a a 
+Stack: T_0  Current lexeme: a b 
+Stack: T_1 b a  Current lexeme: a b 
+Stack: T_1 b  Current lexeme: b a 
+Stack: T_1  Current lexeme: a b 
+Stack: a a T_2  Current lexeme: a b 
+Stack: a a T_3 b a  Current lexeme: a b 
+Stack: a a T_3 b  Current lexeme: b b 
+Stack: a a T_3  Current lexeme: b a 
+Stack: a a b  Current lexeme: b a 
+Stack: a a  Current lexeme: a a 
+Stack: a  Current lexeme: a a 
+Stack: (empty) Current lexeme: a 
+Error! Stack is empty, but chain is not empty yet! 
+
 epsilon non-terminals: {S}
 
 k = 2
