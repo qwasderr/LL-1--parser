@@ -1,6 +1,4 @@
-﻿%start program
-%token begin end if then variable > < == do = while number
-program: begin operator end | begin loop end
-operator: if expression then expression
-loop: while expression do expression
-expression: variable > number | variable < number | variable == number | variable = number
+﻿%start S
+%token a b
+S: a b A | eps
+A: S a a | b
