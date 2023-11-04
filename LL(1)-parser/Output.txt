@@ -1,24 +1,20 @@
 First_k for no terminals:
-S: {;, for (, id =, id and, { ;, { for, { id, { {, { }}
-A: {eps, id =, id and}
-C: {eps, id, id and}
-E: {id, id and}
-V: {id, id and}
-X: {and id, eps}
-B: {{ ;, { for, { id, { {, { }}
-L: {;, ; ;, ; for, ; id, ; {, eps, for (, id =, id and, { ;, { for, { id, { {, { }}
+E: {(, eps, id}
+D: {!, (, *, num}
+R: {!, (, *, num}
+V: {eps, num}
+L: {(, eps}
+Z: {eps}
 
 Follow_k for no terminals:
-S: {; ;, ; for, ; id, ; {, ; }, eps, for (, id =, id and, { ;, { for, { id, { {, { }, }, } ;, } for, } id, } {, } }}
-A: {) ;, ) for, ) id, ) {, ;, ; ;, ; for, ; id, ; {, ; }}
-C: {; ), ; id}
-E: {) ;, ) for, ) id, ) {, ;, ; ), ; ;, ; for, ; id, ; {, ; }}
-V: {) ;, ) for, ) id, ) {, ;, ; ), ; ;, ; for, ; id, ; {, ; }, = id}
-X: {) ;, ) for, ) id, ) {, ;, ; ), ; ;, ; for, ; id, ; {, ; }, = id}
-B: {; ;, ; for, ; id, ; {, ; }, eps, for (, id =, id and, { ;, { for, { id, { {, { }, }, } ;, } for, } id, } {, } }}
-L: {}, } ;, } for, } id, } {, } }}
+E: {), *, eps}
+D: {), *, eps}
+R: {)}
+V: {!, *}
+L: {!, *}
+Z: {!, *}
 
-epsilon non-terminals: {A, C, L, X}
+epsilon non-terminals: {E, L, V, Z}
 
-k = 2
+k = 1
 left-recursive non-terminals: {}

@@ -755,7 +755,7 @@ void out_k(string filename, int k) {
 }
 
 int main() {
-	int k = 2;
+	int k = 1;
 	Grammar grammar;
 	grammar.read("Grammar.txt");
 	grammar.build_first_k(k);
