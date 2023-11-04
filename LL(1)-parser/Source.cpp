@@ -661,7 +661,7 @@ public:
     void build_table_of_control(int k) {
         // TODO: generateCombinations(terminals, k);
         // Generate  Σ_k
-        vector<string> combinations = {"aa", "ab",  "ba", "bb", "a", "b", "eps"};
+        vector<string> combinations = get_combination_of_non_terminal(terminals, k);
         initialize_table_of_control(combinations, k);
 
         int number_of_tables = calculate_number_of_tables();
@@ -692,7 +692,6 @@ public:
                     string w_i = w[i];
                     if(isNonTerminal(w_i)) {
 
-                        cout << "check for " << w_i << endl;
                         // retrieve continuation = w_(i+1_ w_(i+2) ...
                         vector<string> follow_of_non_terminal = continuation_of_production(w, i + 1);
                         map<string, vector<int>> first_k_for_continuation = get_first_k_for(follow_of_non_terminal, k);
@@ -700,7 +699,6 @@ public:
                         const map<string, vector<int>> L_new = sumOfSets(first_k_for_continuation, L_number_of_rule, k);
 
                         // create T. If new rule requires index > max, it means we already check this (T4 = T2 in example, try to find correspond T)
-                        cout << "create T for " << counter_of_t_rules << endl;
                         T T_new = *new T(counter_of_t_rules, w_i, L_new);
                         if (counter_of_t_rules >= number_of_tables) {
                             for (const auto &item: T_rules) {
@@ -717,21 +715,8 @@ public:
                 }
 
                 Cell new_cell = *new Cell(w, rule.first, set_of_positions, position_of_t_rules);
-                cout << "Cell: ";
-                for (int i = 0; i < new_cell.getValues().size(); i++) {
-                    string w_i = new_cell.getValues()[i];
-                    if (new_cell.getPositionOfTRules().count(i) > 0) {
-                        map<int, T> position_to_T_rule = new_cell.getPositionOfTToReference();
-                        cout << "T_" << position_to_T_rule[i].getNumberOfRule() << " ";
-                    } else {
-                        cout << w_i << " ";
-                    }
-                }
-                cout << endl;
-
                 // Update table of control for current rule. u_i ∈ u
                 for (const auto &u_i: u) {
-                    cout << "Key - " << u_i << " T_" << t_rule.second.getNumberOfRule() << endl;
                     table_of_control[u_i][t_rule.second] = new_cell;
                 }
             }
@@ -739,6 +724,33 @@ public:
             // To stop traverse
             if(counter_of_t_rules > number_of_tables) break;
         }
+    }
+
+    vector<string> get_combination_of_non_terminal(vector<string> input, int k) {
+        set<string> result(input.begin(), input.end());
+        result.insert("eps");
+
+        int iteration = 2;
+        while (iteration <= k) {
+            set<string> intermediate_result;
+            for (const auto &w_i: result) {
+                for (const auto &w_j: result) {
+                    map<string, vector<int>> map_w_i;
+                    map_w_i[w_i] = {static_cast<int>(w_i.length())};
+                    map<string, vector<int>> map_w_j;
+                    map_w_j[w_j] = {static_cast<int>(w_j.length())};
+                    const map<string, vector<int>> concat = sumOfSets(map_w_i, map_w_j, iteration);
+                    const vector<string> combinations = extract_keys_from_map(concat);
+                    for (const auto &item: combinations) {
+                        intermediate_result.insert(item);
+                    }
+                }
+            }
+            result.insert(intermediate_result.begin(), intermediate_result.end());
+            iteration++;
+        }
+
+        return vector(result.begin(), result.end());
     }
 
     static string vectorToString(const vector<string>& vect) {
