@@ -873,7 +873,7 @@ public:
         }
     }
 
-    void insertAtBottom(std::stack<StackItem>& stack, StackItem value) {
+    void insertAtBottom(std::stack<StackItem>& stack, const StackItem& value) {
         if (stack.empty()) {
             stack.push(value);
             return;
@@ -894,7 +894,7 @@ public:
         }
     }
     
-    vector<string> read_current_lexeme(vector<string> to, vector<string> from, int started_from, int max_length) {
+    static vector<string> read_current_lexeme(vector<string> to, vector<string> from, int started_from, int max_length) {
         while(to.size() < max_length && started_from < from.size()) {
             to.push_back(from[started_from++]);
         }
@@ -902,30 +902,21 @@ public:
     }
 
     vector<string> get_combination_of_terminal(vector<string> input, int k) {
-        set<string> result(input.begin(), input.end());
-        result.insert("eps");
+        map<string, vector<int>> input_map;
+        input_map["eps"] = {3};
+        for (const auto &item: input) {
+            input_map[item] = {static_cast<int>(input.size())};
+        }
+
+        map<string, vector<int>> result(input_map.begin(), input_map.end());
 
         int iteration = 2;
         while (iteration <= k) {
-            set<string> intermediate_result;
-            for (const auto &w_i: result) {
-                for (const auto &w_j: result) {
-                    map<string, vector<int>> map_w_i;
-                    map_w_i[w_i] = {static_cast<int>(w_i.length())};
-                    map<string, vector<int>> map_w_j;
-                    map_w_j[w_j] = {static_cast<int>(w_j.length())};
-                    const map<string, vector<int>> concat = sumOfSets(map_w_i, map_w_j, iteration);
-                    const vector<string> combinations = extract_keys_from_map(concat);
-                    for (const auto &item: combinations) {
-                        intermediate_result.insert(item);
-                    }
-                }
-            }
-            result.insert(intermediate_result.begin(), intermediate_result.end());
+            result = mergeMaps(result, sumOfSets(result, input_map, iteration));
             iteration++;
         }
 
-        return vector(result.begin(), result.end());
+        return extract_keys_from_map(result);
     }
 
     static string vector_to_string(const vector<string>& vect, bool withSpace) {
