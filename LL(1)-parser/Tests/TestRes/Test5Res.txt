@@ -1,0 +1,28 @@
+First_k for no terminals:
+<program>: {eps, id :=, read id, write (, write id, write number}
+<stmt_list>: {eps, id :=, read id, write (, write id, write number}
+<stmt>: {id :=, read id, write (, write id, write number}
+<expr>: {( (, ( id, ( number, id, id *, id +, id -, id /, number, number *, number +, number -, number /}
+<term_tail>: {+ (, + id, + number, - (, - id, - number, eps}
+<term>: {( (, ( id, ( number, id, id *, id /, number, number *, number /}
+<fact_tail>: {* (, * id, * number, / (, / id, / number, eps}
+<factor>: {( (, ( id, ( number, id, number}
+<add_op>: {+, -}
+<mult_op>: {*, /}
+
+Follow_k for no terminals:
+<program>: {eps}
+<stmt_list>: {eps}
+<stmt>: {eps, id :=, read id, write (, write id, write number}
+<expr>: {), ) ), ) *, ) +, ) -, ) /, ) id, ) read, ) write, eps, id :=, read id, write (, write id, write number}
+<term_tail>: {), ) ), ) *, ) +, ) -, ) /, ) id, ) read, ) write, eps, id :=, read id, write (, write id, write number}
+<term>: {), ) ), ) *, ) +, ) -, ) /, ) id, ) read, ) write, + (, + id, + number, - (, - id, - number, eps, id :=, read id, write (, write id, write number}
+<fact_tail>: {), ) ), ) *, ) +, ) -, ) /, ) id, ) read, ) write, + (, + id, + number, - (, - id, - number, eps, id :=, read id, write (, write id, write number}
+<factor>: {), ) ), ) *, ) +, ) -, ) /, ) id, ) read, ) write, * (, * id, * number, + (, + id, + number, - (, - id, - number, / (, / id, / number, eps, id :=, read id, write (, write id, write number}
+<add_op>: {( (, ( id, ( number, id, id ), id *, id +, id -, id /, id id, id read, id write, number, number ), number *, number +, number -, number /, number id, number read, number write}
+<mult_op>: {( (, ( id, ( number, id, id ), id *, id +, id -, id /, id id, id read, id write, number, number ), number *, number +, number -, number /, number id, number read, number write}
+
+epsilon non-terminals: {<fact_tail>, <program>, <stmt_list>, <term_tail>}
+
+k = 2
+left-recursive non-terminals: {}

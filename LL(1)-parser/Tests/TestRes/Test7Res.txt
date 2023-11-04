@@ -1,0 +1,24 @@
+First_k for no terminals:
+S: {;, for (, id =, id and, { ;, { for, { id, { {, { }}
+A: {eps, id =, id and}
+C: {eps, id, id and}
+E: {id, id and}
+V: {id, id and}
+X: {and id, eps}
+B: {{ ;, { for, { id, { {, { }}
+L: {;, ; ;, ; for, ; id, ; {, eps, for (, id =, id and, { ;, { for, { id, { {, { }}
+
+Follow_k for no terminals:
+S: {; ;, ; for, ; id, ; {, ; }, eps, for (, id =, id and, { ;, { for, { id, { {, { }, }, } ;, } for, } id, } {, } }}
+A: {) ;, ) for, ) id, ) {, ;, ; ;, ; for, ; id, ; {, ; }}
+C: {; ), ; id}
+E: {) ;, ) for, ) id, ) {, ;, ; ), ; ;, ; for, ; id, ; {, ; }}
+V: {) ;, ) for, ) id, ) {, ;, ; ), ; ;, ; for, ; id, ; {, ; }, = id}
+X: {) ;, ) for, ) id, ) {, ;, ; ), ; ;, ; for, ; id, ; {, ; }, = id}
+B: {; ;, ; for, ; id, ; {, ; }, eps, for (, id =, id and, { ;, { for, { id, { {, { }, }, } ;, } for, } id, } {, } }}
+L: {}, } ;, } for, } id, } {, } }}
+
+epsilon non-terminals: {A, C, L, X}
+
+k = 2
+left-recursive non-terminals: {}

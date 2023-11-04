@@ -1,0 +1,10 @@
+%start S
+%token ; for ( ) = id and { }
+S: A ; | for ( A ; C ; A ) S | B
+A: V = E | eps
+C: E | eps
+E: V
+V: id X
+X: and V | eps
+B: { L }
+L: S L | eps

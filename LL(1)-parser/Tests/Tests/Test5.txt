@@ -1,0 +1,12 @@
+%start <program>
+%token id number read id + - * / write := ( )
+<program>: <stmt_list>
+<stmt_list>: <stmt> <stmt_list> | eps
+<stmt>: id := <expr> | read id | write <expr>
+<expr>: <term> <term_tail>
+<term_tail>: <add_op> <term> <term_tail> | eps
+<term>: <factor> <fact_tail>
+<fact_tail>: <mult_op> <factor> <fact_tail> | eps
+<factor>: ( <expr> ) | id | number
+<add_op>: + | -
+<mult_op>: * | /
